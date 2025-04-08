@@ -332,4 +332,56 @@ print(stats_df)
 # Hiển thị số lượng cho biến phân loại Product_Collection
 print("\nThống kê số lượng cho Product_Collection:")
 print(product_collection_counts)
+import pandas as pd
+import statsmodels.api as sm
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
 
+# Đọc dữ liệu từ file CSV
+data = pd.read_csv('Intel_CPUs.csv')
+
+# Xử lý dữ liệu
+data['Recommended_Customer_Price'] = data['Recommended_Customer_Price'].apply(
+    lambda x: float(x.replace(',', '').replace('$', '').strip()) if isinstance(x, str) else x
+)
+data = data[['Recommended_Customer_Price', 'nb_of_Cores', 'nb_of_Threads', 'Cache', 'Bus_Speed', 'Processor_Base_Frequency', 'Max_Memory_Size', 'Max_Memory_Bandwidth']]
+data.dropna(inplace=True)
+
+# Chọn cột đặc trưng và cột mục tiêu
+X = data[['nb_of_Cores', 'nb_of_Threads', 'Cache', 'Bus_Speed', 'Processor_Base_Frequency', 'Max_Memory_Size', 'Max_Memory_Bandwidth']]
+y = data['Recommended_Customer_Price']
+
+# Thêm cột hệ số chặn cho mô hình hồi quy
+X = sm.add_constant(X)
+
+# Chia dữ liệu thành tập huấn luyện và tập kiểm tra
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Xây dựng mô hình hồi quy tuyến tính với statsmodels
+model = sm.OLS(y_train, X_train).fit()
+
+# In kết quả tóm tắt của mô hình
+print(model.summary())
+
+# Dự đoán giá trị trên tập kiểm tra
+y_pred = model.predict(X_test)
+
+# Đánh giá mô hình
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f'Mean Squared Error: {mse}')
+print(f'R^2 Score: {r2}')
+
+# In hệ số của mô hình với tên các biến
+coefficients = model.params
+print('\nCoefficients:')
+for i, col in enumerate(X.columns):
+    print(f'{col}: {coefficients[i]}')
+
+print(f'\nIntercept: {model.params[0]}')
+
+# Kiểm tra một số dự đoán
+print('True values:', y_test.head().values)
+print('Predicted values:', y_pred[:5])
