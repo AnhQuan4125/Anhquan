@@ -10,26 +10,11 @@ data = pd.read_csv(file_path)
 
 # Chọn các cột cần thiết
 columns_to_extract = [
-    'Product_Collection', 'Launch_Date', 'Recommended_Customer_Price',
+    'Product_Collection', 'Recommended_Customer_Price',
     'nb_of_Cores', 'nb_of_Threads', 'Cache', 'Bus_Speed',
-    'Processor_Base_Frequency', 'Max_Memory_Size', 'Max_Memory_Bandwidth'
+    'Max_Memory_Size', 'Max_Memory_Bandwidth'
 ]
 data = data[columns_to_extract]
-
-# Xử lý dữ liệu thiếu
-data.dropna(subset=['Launch_Date'], inplace=True)
-
-# Hàm chuyển đổi cột Launch_Date
-def convert_launch_date(date):
-    quarter_mapping = {'1': 0.00, '2': 0.25, '3': 0.50, '4': 0.75}
-    quarter = quarter_mapping[date[1]]
-    year = int(date[3:].replace("'", ""))
-    result = year + 1 + quarter
-    if result >= 100:
-        result = result - 100
-    return result
-
-data['Launch_Date'] = data['Launch_Date'].apply(convert_launch_date)
 
 # Hàm chuẩn hóa cột Product_Collection
 def clean_product_collection(value):
@@ -121,25 +106,6 @@ def fill_missing_bus_speed(row):
 data['Bus_Speed'] = data.apply(fill_missing_bus_speed, axis=1)
 data['Bus_Speed'] = data['Bus_Speed'].fillna(data['Bus_Speed'].mean())
 
-# Hàm làm sạch và chuyển đổi giá trị trong cột Processor_Base_Frequency
-def clean_processor_frequency(value):
-    if isinstance(value, str):
-        value = value.strip()
-        if 'GHz' in value:
-            try:
-                return float(value.replace('GHz', '').strip()) * 1000
-            except ValueError:
-                return np.nan
-        elif 'MHz' in value:
-            try:
-                return float(value.replace('MHz', '').strip())
-            except ValueError:
-                return np.nan
-    return pd.to_numeric(value, errors='coerce')
-
-data['Processor_Base_Frequency'] = data['Processor_Base_Frequency'].apply(clean_processor_frequency)
-data['Processor_Base_Frequency'] = data['Processor_Base_Frequency'].fillna(data['Processor_Base_Frequency'].mean())
-
 # Hàm làm sạch và chuyển đổi giá trị trong cột Cache
 def clean_cache(value):
     if isinstance(value, str):
@@ -185,7 +151,7 @@ def clean_max_memory_size(value):
 data['Max_Memory_Size'] = data['Max_Memory_Size'].apply(clean_max_memory_size)
 data['Max_Memory_Size'] = data['Max_Memory_Size'].fillna(data['Max_Memory_Size'].mean())
 
-data = data.drop(columns=['Processor_Base_Frequency'])
+# Danh sách biến độc lập không bao gồm Launch_Date và Processor_Base_Frequency
 X = data[['nb_of_Cores', 'nb_of_Threads', 'Cache', 'Bus_Speed', 'Max_Memory_Size', 'Max_Memory_Bandwidth']]
 y = data['Recommended_Customer_Price']
 
@@ -223,9 +189,9 @@ residuals = y_test - y_pred
 residuals_stats = {
     'min': np.min(residuals),
     'max': np.max(residuals),
-    'Q1': np.percentile(residuals, 25),
+    '1Q': np.percentile(residuals, 25),
     'median': np.median(residuals),
-    'Q3': np.percentile(residuals, 75)
+    '3Q': np.percentile(residuals, 75)
 }
 
 print("\nBảng thống kê các giá trị đặc trưng của phần dư:")
