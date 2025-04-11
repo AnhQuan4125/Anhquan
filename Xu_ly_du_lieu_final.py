@@ -3,6 +3,9 @@ import numpy as np
 import statsmodels.api as sm
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+import seaborn as sns
+import scipy.stats as stats
 
 # Đọc dữ liệu từ file CSV
 file_path = 'Intel_CPUs.csv'
@@ -209,3 +212,44 @@ print(f'\nIntercept: {model.params[0]}')
 # Kiểm tra một số dự đoán
 print('True values:', y_test.head().values)
 print('Predicted values:', y_pred[:5])
+
+# Visualization of residuals
+# Biểu đồ phần dư so với giá trị dự đoán
+plt.figure(figsize=(10, 6))
+plt.scatter(y_pred, residuals, alpha=0.6)
+plt.axhline(0, color='red', linestyle='--', linewidth=2)
+plt.title('Residuals vs Fitted Values', fontsize=16)
+plt.xlabel('Fitted Values (Predicted)', fontsize=14)
+plt.ylabel('Residuals', fontsize=14)
+plt.grid(alpha=0.3)
+plt.show()
+
+# Histogram của phần dư
+plt.figure(figsize=(10, 6))
+sns.histplot(residuals, kde=True, bins=30, color='blue', alpha=0.7)
+plt.title('Histogram of Residuals', fontsize=16)
+plt.xlabel('Residuals', fontsize=14)
+plt.ylabel('Density', fontsize=14)
+plt.grid(alpha=0.3)
+plt.show()
+
+# Q-Q Plot để kiểm tra phân phối chuẩn
+plt.figure(figsize=(10, 6))
+stats.probplot(residuals, dist="norm", plot=plt)
+plt.title('Q-Q Plot of Residuals', fontsize=16)
+plt.grid(alpha=0.3)
+plt.show()
+
+# Residuals vs Leverage
+influence = model.get_influence()
+leverage = influence.hat_matrix_diag
+studentized_residuals = influence.resid_studentized_internal
+
+plt.figure(figsize=(10, 6))
+plt.scatter(leverage, studentized_residuals, alpha=0.6)
+plt.axhline(0, color='red', linestyle='--', linewidth=2)
+plt.title('Residuals vs Leverage', fontsize=16)
+plt.xlabel('Leverage', fontsize=14)
+plt.ylabel('Studentized Residuals', fontsize=14)
+plt.grid(alpha=0.3)
+plt.show()
