@@ -6,6 +6,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 import scipy.stats as stats
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 # Đọc dữ liệu từ file CSV
 file_path = 'Intel_CPUs.csv'
@@ -253,3 +254,28 @@ plt.xlabel('Leverage', fontsize=14)
 plt.ylabel('Studentized Residuals', fontsize=14)
 plt.grid(alpha=0.3)
 plt.show()
+def calculate_vif(X):
+    """
+    Hàm tính toán Variance Inflation Factor (VIF) cho các biến độc lập.
+    
+    Parameters:
+    X (pd.DataFrame): DataFrame chứa các biến độc lập (không bao gồm biến phụ thuộc).
+    
+    Returns:
+    pd.DataFrame: DataFrame chứa tên biến và giá trị VIF tương ứng.
+    """
+    vif_data = pd.DataFrame()
+    vif_data["Variable"] = X.columns
+    vif_data["VIF"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
+    return vif_data
+
+# Ví dụ áp dụng với dữ liệu đã chuẩn bị
+# Giả sử X là tập biến độc lập đã thêm hệ số chặn (constant)
+X = data[['nb_of_Cores', 'nb_of_Threads', 'Cache', 'Bus_Speed', 'Max_Memory_Size', 'Max_Memory_Bandwidth']]
+X = sm.add_constant(X)  # Thêm hệ số chặn
+
+# Tính VIF
+vif_result = calculate_vif(X)
+
+# In kết quả
+print(vif_result)
